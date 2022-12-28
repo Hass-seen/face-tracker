@@ -1,4 +1,5 @@
 import cv2
+import json
 
 # Read the video
 video = cv2.VideoCapture("video.mp4")
@@ -11,6 +12,8 @@ if not video.isOpened():
 # Initialize a list to store the tracking data
 tracking_data = []
 
+
+reducer=0
 # Read each frame of the video
 while True:
     success, frame = video.read()
@@ -50,7 +53,7 @@ while True:
     x, y, w, h = face
 
     # Use the MeanShift algorithm to track the face or object
-    track_window = cv2.meanShift(gray[y:y+h, x:x+w], (x, y, w, h), criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1))
+    track_window = cv2.meanShift(gray[y:y+h, x:x+w], (x, y, w, h), criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 300, 1))
 
     # Extract the tracking window coordinates
     cx, cy = track_window
@@ -59,12 +62,15 @@ while True:
     cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
     # Store the tracking data
-    tracking_data.append((cx, cy))
+    if reducer %5==0:
+       tracking_data.append((cx, cy))
+    reducer+=1
 
 # Release the video capture
 video.release()
 
 # Save the tracking data to a file
-with open("tracking_data.txt", "w") as file:
-    for data in tracking_data:
-        file.write(f"{data[0]},{data[1]}\n")
+track= [tr[1] for tr in tracking_data ]
+JasonOBJ = json.dumps(track, indent=2)
+with open("track.json", "w") as outfile:
+        outfile.write(JasonOBJ)
